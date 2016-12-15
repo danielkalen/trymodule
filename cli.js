@@ -1,6 +1,7 @@
 #! /usr/bin/env node
 
 var repl = require('repl')
+var nesh = require('nesh')
 var path = require('path')
 var os = require('os')
 var colors = require('colors')
@@ -17,11 +18,9 @@ const packages = {}; // data looks like [moduleName, as]
 const makeVariableFriendly = str => str.replace(/-|\./g, '_')
 
 process.argv.slice(2).forEach(arg => {
-  if(arg[0] === '-') {
-    // matches '--clear', etc
+  if(arg[0] === '-') { // matches '--clear', etc
     flags.push(arg)
-  } else if(arg.indexOf('=') > -1) {
-    // matches 'lodash=_', etc
+  } else if(arg.indexOf('=') > -1) { // matches 'lodash=_', etc
     const i = arg.indexOf('=')
     const module = arg.slice(0, i) // 'lodash'
     const as = arg.slice(i + 1) // '_'
@@ -64,13 +63,27 @@ if (hasFlag('--clear')) {
     const context_packages = packages.reduce((context, pkg) => {
       return addPackageToObject(context, pkg)
     }, {})
-    console.log('REPL started...')
+    
+    let targetLang = 'JavaScript';
+    
+    if (hasFlag('--coffee')) {
+      nesh.loadLanguage('coffee');
+      targetLang = 'CoffeeScript';
+    
+    } else if (hasFlag('--babel')) {
+      nesh.loadLanguage('babel');
+      targetLang = 'BabelJS';
+    }
+    console.log(`${targetLang} REPL started...`);
+
     if (!process.env.TRYMODULE_NONINTERACTIVE) {
-      var replServer = repl.start({
-        prompt: '> '
-      })
-      replHistory(replServer, TRYMODULE_HISTORY_PATH)
-      replServer.context = Object.assign(replServer.context, context_packages)
+      nesh.start({
+        prompt: '> ',
+        historyFile: TRYMODULE_HISTORY_PATH
+      }, function(err, replServer){
+        if (err) console.error(err);
+        replServer.context = Object.assign(replServer.context, context_packages);
+      });
     }
   })
 }

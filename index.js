@@ -20,7 +20,7 @@ const loadPackage = (moduleName, moduleAs, install_path) => {
         if (err) {
           console.log(colors.red(err.message))
           if (err.statusCode === 404) {
-            throw new Error(`Could not find package ${pkg}`)
+            throw new Error(`Could not find package ${moduleName}`)
           }
           if (err.code === npmi.LOAD_ERR) {
             throw new Error('npm load error')
